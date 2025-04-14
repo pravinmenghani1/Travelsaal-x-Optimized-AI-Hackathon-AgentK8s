@@ -1,66 +1,80 @@
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# app/run_agentk8s.py
 
 import streamlit as st
-from app.ui_components import display_risks_chart, display_recommendation_links
-from app.report_utils import generate_pdf
 from agents.agentk8s import AgentK8s
-from dotenv import load_dotenv
-import io
+from agents.pdf_generator import generate_pdf
 
-load_dotenv()
-st.set_page_config(page_title="AgentK8s – EKS Review", layout="wide")
+st.set_page_config(page_title="AgentK8s – EKS Operational Review", layout="wide")
+st.title("AgentK8s - EKS Operational Review Agent 🤖")
+st.markdown("Provide details across all areas to generate a comprehensive report.")
 
-# Session init
-if "agent" not in st.session_state:
-    st.session_state.agent = AgentK8s()
-    st.session_state.objectives = None
-    st.session_state.issues = []
-    st.session_state.risks = []
-    st.session_state.recommendations = []
-    st.session_state.step = "objective"
+agent = AgentK8s()
+user_answers = {}
 
-agent = st.session_state.agent
+with st.form("eks_review_form"):
+    st.subheader("💡 Cluster Health")
+    user_answers["cluster_health"] = st.text_area(
+        "Cluster Status, Node Status, Scheduling issues, etc.",
+        value="We have multiple nodes frequently going NotReady. Some pods are stuck in Pending state due to insufficient memory on nodes."
+    )
 
-# Step 1: Capture Objectives
-if st.session_state.step == "objective":
-    st.title("🤖 AgentK8s – EKS Operational Review")
-    objective = st.text_input("Describe your EKS review goals (e.g., performance issues, cost optimization)...")
-    if objective:
-        st.session_state.objectives = objective
-        agent.set_objective(objective)
-        st.success("Thanks! Now describe each problem you're facing one-by-one.")
-        st.session_state.step = "issues"
-        st.rerun()
+    st.subheader("💸 Cost Optimization")
+    user_answers["cost_optimization"] = st.text_area(
+        "Cost concerns, unused resources, right-sizing opportunities.",
+        value="There are several underutilized EC2 instances. Cluster autoscaler is not configured. Spot instances are not being used."
+    )
 
-# Step 2: Capture Issues
-elif st.session_state.step == "issues":
-    st.header("🧩 EKS Issues")
-    issue = st.chat_input("What’s one issue you’re facing in EKS (e.g., pending pods, high CPU)...")
-    if issue:
-        response = agent.process_input(issue)
-        st.session_state.issues.append(issue)
-        st.session_state.risks = agent.risks
-        st.session_state.recommendations = agent.recommendations
-        st.chat_message("user").write(issue)
-        st.chat_message("assistant").write(response)
+    st.subheader("🔐 Security")
+    user_answers["security"] = st.text_area(
+        "IAM roles, secrets management, network policies, etc.",
+        value="No network policies are defined. IAM roles are shared across services. Secrets are stored in plain config maps."
+    )
 
-    if st.button("✅ Generate Final Report"):
-        st.session_state.step = "report"
-        st.rerun()
+    st.subheader("📈 Monitoring")
+    user_answers["monitoring"] = st.text_area(
+        "Tooling, dashboards, alerts, metrics setup.",
+        value="We use Prometheus and Grafana. Alerts are configured but there are no alerts for disk or memory pressure."
+    )
 
-# Step 3: Display Report
-elif st.session_state.step == "report":
-    st.header("📊 EKS Operational Report")
+    st.subheader("⚙️ CI/CD")
+    user_answers["cicd"] = st.text_area(
+        "Deployment frequency, pipeline tools, rollback strategy.",
+        value="GitHub Actions is used for CI/CD. Rollbacks are manual. There is no canary or blue/green deployment strategy."
+    )
 
-    st.subheader("🚨 Risks Identified")
-    display_risks_chart(st.session_state.risks)
+    st.subheader("🧩 Others")
+    user_answers["others"] = st.text_area(
+        "Kubernetes version, architecture, special needs (e.g. Windows containers).",
+        value="Running EKS version 1.22. Planning to migrate to 1.28. Considering Windows containers support for legacy workloads."
+    )
 
-    st.subheader("✅ Recommendations")
-    display_recommendation_links(st.session_state.recommendations)
+    submitted = st.form_submit_button("Run AgentK8s")
 
-    # Generate PDF
-    summary = agent.generate_summary()
-    pdf_data = generate_pdf(summary)
-    st.download_button("📄 Download PDF Report", pdf_data, "eks_review_report.pdf", mime="application/pdf")
+if submitted:
+    if any(user_answers.values()):
+        with st.spinner("Analyzing your EKS setup..."):
+            for key, answer in user_answers.items():
+                if answer:
+                    agent.add_user_message(f"{key.replace('_', ' ').capitalize()}: {answer}")
+
+                    final_output = agent("""
+                    Please analyze the provided information and return a prescriptive action plan for improving EKS operations.
+
+                    For each area (Cluster Health, Cost Optimization, Security, Monitoring, CI/CD, Others), list:
+                    - Risk: <summary of one or more risks>
+                    - Recommendation: <summary of one or more recommendations>
+
+                    Structure your output clearly using 'Risk:' and 'Recommendation:' tags so it can be extracted.
+                    """)
+            report = agent.generate_prescriptive_report()
+
+            st.markdown(report)
+
+            try:
+                pdf_file = generate_pdf(report)
+                with open(pdf_file, "rb") as f:
+                    st.download_button("📄 Download PDF Report", data=f, file_name=pdf_file)
+            except Exception as e:
+                st.error(f"PDF generation failed: {str(e)}")
+    else:
+        st.warning("Please provide details in at least one section.")

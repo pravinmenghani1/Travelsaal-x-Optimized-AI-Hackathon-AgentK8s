@@ -1,5 +1,7 @@
+agentpro
 streamlit==1.31.1
 fpdf==1.7.2
 python-dotenv==1.0.1
 pandas==2.2.1
 altair==5.2.0
+git+https://github.com/traversaal-ai/AgentPro.git
