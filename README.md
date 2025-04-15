@@ -44,3 +44,25 @@ AgentPro/ ├── agents/ │ ├── agentk8s.py # Main AI agent logic usin
 Question ➝ Thought ➝ Action ➝ Action Input ➝ Observation ➝ ... ➝ Final Answer
 
 
+
+This enables multi-step reasoning before arriving at a final recommendation.
+
+### 2. System Prompt for EKS Analysis
+The system prompt guides the agent to:
+- Ask intelligent follow-up questions
+- Identify operational risks
+- Categorize recommendations into:
+  - **Short-Term (0–3 months)**
+  - **Medium-Term (3–6 months)**
+  - **Long-Term (6–18 months)**
+
+### 3. Tool Integration
+The agent supports calling custom tools (e.g., metrics scanners, cost analyzers) using the `Tool` base class. You can plug in new tools by extending the `Tool` interface.
+
+Example tool call from the agent:
+
+```text
+Action: DummyTool
+Action Input: {"metric": "node_cpu_utilization"}
+Observation: Simulated tool output for input: {'metric': 'node_cpu_utilization'}
+
