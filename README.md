@@ -40,3 +40,7 @@ AgentPro/ ├── agents/ │ ├── agentk8s.py # Main AI agent logic usin
 ### 1. Agent Architecture (REACT Pattern)
 `AgentK8s` is built using a reasoning loop inspired by [AgentPro](https://github.com/traversaal/agentpro)'s architecture. It follows this structure:
 
+
+Question ➝ Thought ➝ Action ➝ Action Input ➝ Observation ➝ ... ➝ Final Answer
+
+
