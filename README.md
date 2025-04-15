@@ -64,9 +64,21 @@ Example tool call from the agent:
 ```text
 Action: DummyTool
 Action Input: {"metric": "node_cpu_utilization"}
-Observation: Simulated tool output for input: {'metric': 'node_cpu_utilization'} '''
+Observation: Simulated tool output for input: {'metric': 'node_cpu_utilization'} 
 
-##
+
 ### 4. PDF Report Generation
 After all user inputs are collected and analyzed, a Markdown-style report is created and visualized using Streamlit, and exported as a PDF (via libraries like pdfkit or reportlab, depending on setup).
 
+🌐 Web UI (Streamlit)
+The frontend is built using Streamlit, allowing users to:
+
+Fill in structured details about their EKS environment
+
+Submit input for analysis
+
+View identified risks and recommendations
+
+Download the PDF report
+
+Example UI workflow:
