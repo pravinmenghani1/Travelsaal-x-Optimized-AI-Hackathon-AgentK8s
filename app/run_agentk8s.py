@@ -6,6 +6,24 @@ import sys
 from agents.agentk8s import AgentK8s
 from agents.pdf_generator import generate_pdf
 from openai import OpenAIError
+# app/run_agentk8s.py
+
+# Add the parent directory to the Python path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
+# Now try to import from agents
+try:
+    from agents.agentk8s import AgentK8s
+    from agents.pdf_generator import generate_pdf
+except ImportError as e:
+    st.error(f"Failed to import agents module: {str(e)}")
+    st.error(f"Current directory: {os.getcwd()}")
+    st.error(f"Python path: {sys.path}")
+    raise
+
+from openai import OpenAIError
 
 # Function to validate OpenAI API key format
 def validate_api_key(api_key):
