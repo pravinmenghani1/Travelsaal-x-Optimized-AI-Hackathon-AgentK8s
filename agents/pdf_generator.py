@@ -42,22 +42,22 @@ class PDFReportGenerator(FPDF):
         
         # Define font paths
         self.fonts = {
-            'regular': font_dir / "DejaVuSans.ttf",
-            'bold': font_dir / "DejaVuSans-Bold.ttf",
-            'italic': font_dir / "DejaVuSans-Oblique.ttf"
+            'regular': str(font_dir / "DejaVuSans.ttf"),
+            'bold': str(font_dir / "DejaVuSans-Bold.ttf"),
+            'italic': str(font_dir / "DejaVuSans-Oblique.ttf")
         }
         
         # Register fonts with error handling
         try:
             for style, path in self.fonts.items():
-                if path.exists():
+                if Path(path).exists():
                     print(f"Loading font: {path}")
                     if style == 'regular':
-                        self.add_font("DejaVu", "", str(path), uni=True)
+                        self.add_font("DejaVu", "", path, uni=True)
                     elif style == 'bold':
-                        self.add_font("DejaVu", "B", str(path), uni=True)
+                        self.add_font("DejaVu", "B", path, uni=True)
                     elif style == 'italic':
-                        self.add_font("DejaVu", "I", str(path), uni=True)
+                        self.add_font("DejaVu", "I", path, uni=True)
                 else:
                     print(f"Font file not found: {path}")
             
@@ -129,7 +129,7 @@ def generate_pdf(report_text: str, output_filename: str = "eks_operational_repor
         except Exception as e:
             print(f"Error saving to primary location: {str(e)}")
             # Try alternate location
-            tmp_filename = f"/tmp/{os.path.basename(output_filename)}"
+            tmp_filename = f"/tmp/{Path(output_filename).name}"
             print(f"Attempting to save PDF to alternate location: {tmp_filename}")
             pdf.output(tmp_filename)
             output_filename = tmp_filename
