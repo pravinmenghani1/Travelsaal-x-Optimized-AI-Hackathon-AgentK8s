@@ -3,7 +3,6 @@
 from fpdf import FPDF
 import os
 import re
-from pathlib import Path
 
 def replace_emojis(text):
     """
@@ -29,75 +28,52 @@ class PDFReportGenerator(FPDF):
         super().__init__()
         self.title = title
         
-        # Get the repository root path using Path for better cross-platform compatibility
-        repo_root = Path(__file__).parent.parent.absolute()
-        font_dir = repo_root / "fonts"
-        
-        # Print debug information
-        print(f"Repository root: {repo_root}")
-        print(f"Font directory: {font_dir}")
-        print(f"Font directory exists: {font_dir.exists()}")
-        if font_dir.exists():
-            print(f"Font directory contents: {list(font_dir.glob('*.ttf'))}")
+        # Get font paths using os.path
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        font_dir = os.path.join(os.path.dirname(current_dir), 'fonts')
         
         # Define font paths
-        self.fonts = {
-            'regular': str(font_dir / "DejaVuSans.ttf"),
-            'bold': str(font_dir / "DejaVuSans-Bold.ttf"),
-            'italic': str(font_dir / "DejaVuSans-Oblique.ttf")
-        }
+        regular_font = os.path.join(font_dir, "DejaVuSans.ttf")
+        bold_font = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
+        italic_font = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
+        
+        print(f"Font directory: {font_dir}")
+        print(f"Regular font path: {regular_font}")
         
         # Register fonts with error handling
         try:
-            for style, path in self.fonts.items():
-                if Path(path).exists():
-                    print(f"Loading font: {path}")
-                    if style == 'regular':
-                        self.add_font("DejaVu", "", path, uni=True)
-                    elif style == 'bold':
-                        self.add_font("DejaVu", "B", path, uni=True)
-                    elif style == 'italic':
-                        self.add_font("DejaVu", "I", path, uni=True)
-                else:
-                    print(f"Font file not found: {path}")
-            
-            # Test if fonts were loaded
+            if os.path.exists(regular_font):
+                self.add_font("DejaVu", "", regular_font, uni=True)
+            if os.path.exists(bold_font):
+                self.add_font("DejaVu", "B", bold_font, uni=True)
+            if os.path.exists(italic_font):
+                self.add_font("DejaVu", "I", italic_font, uni=True)
             self.set_font("DejaVu", "", 12)
-            print("Fonts loaded successfully")
-            
+            print("Custom fonts loaded successfully")
         except Exception as e:
-            print(f"Error loading fonts: {str(e)}")
-            print("Falling back to Arial font")
+            print(f"Error loading custom fonts: {str(e)}")
             self.set_font("Arial", size=12)
+            print("Using Arial font as fallback")
     
     def header(self):
         try:
             self.set_font("DejaVu", "B", 16)
-        except Exception as e:
-            print(f"Header font error: {str(e)}")
+        except:
             self.set_font("Arial", "B", 16)
-            
-        self.cell(0, 10, self.title, border=False, ln=1, align="C")
+        self.cell(0, 10, self.title, 0, 1, 'C')
         self.ln(10)
     
     def footer(self):
         self.set_y(-15)
         try:
             self.set_font("DejaVu", "", 8)
-        except Exception as e:
-            print(f"Footer font error: {str(e)}")
+        except:
             self.set_font("Arial", "", 8)
-            
-        self.cell(0, 10, f"Page {self.page_no()}", align="C")
+        self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'C')
 
 def generate_pdf(report_text: str, output_filename: str = "eks_operational_report.pdf"):
     """
     Generate a PDF report from the given text.
-    Args:
-        report_text (str): The text content to be converted to PDF
-        output_filename (str): The desired name of the output PDF file
-    Returns:
-        str: The path to the generated PDF file
     """
     try:
         # Clean the text
@@ -110,8 +86,7 @@ def generate_pdf(report_text: str, output_filename: str = "eks_operational_repor
         # Set font with fallback
         try:
             pdf.set_font("DejaVu", "", 12)
-        except Exception as e:
-            print(f"Font setting error: {str(e)}")
+        except:
             pdf.set_font("Arial", "", 12)
 
         # Write content
@@ -123,20 +98,16 @@ def generate_pdf(report_text: str, output_filename: str = "eks_operational_repor
 
         # Try to save the PDF
         try:
-            print(f"Attempting to save PDF to: {output_filename}")
-            pdf.output(output_filename)
-            print(f"PDF saved successfully to: {output_filename}")
-        except Exception as e:
-            print(f"Error saving to primary location: {str(e)}")
-            # Try alternate location
-            tmp_filename = f"/tmp/{Path(output_filename).name}"
-            print(f"Attempting to save PDF to alternate location: {tmp_filename}")
+            # Try to save in /tmp first
+            tmp_filename = os.path.join('/tmp', os.path.basename(output_filename))
             pdf.output(tmp_filename)
-            output_filename = tmp_filename
-            print(f"PDF saved successfully to alternate location: {output_filename}")
+            return tmp_filename
+        except Exception as e:
+            print(f"Error saving to /tmp: {str(e)}")
+            # If /tmp fails, try current directory
+            pdf.output(output_filename)
+            return output_filename
             
-        return output_filename
-    
     except Exception as e:
         print(f"PDF Generation Error: {str(e)}")
         raise
@@ -149,10 +120,6 @@ if __name__ == "__main__":
     Cluster Health
     Risk: Multiple nodes are experiencing issues
     Recommendation: Implement proper monitoring
-    
-    Cost Optimization
-    Risk: Resources are underutilized
-    Recommendation: Configure auto-scaling
     """
     
     try:
