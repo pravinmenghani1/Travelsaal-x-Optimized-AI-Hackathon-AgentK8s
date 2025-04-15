@@ -66,6 +66,7 @@ Action: DummyTool
 Action Input: {"metric": "node_cpu_utilization"}
 Observation: Simulated tool output for input: {'metric': 'node_cpu_utilization'} 
 
+---
 
 ### 4. PDF Report Generation
 After all user inputs are collected and analyzed, a Markdown-style report is created and visualized using Streamlit, and exported as a PDF (via libraries like pdfkit or reportlab, depending on setup).
@@ -83,6 +84,7 @@ Download the PDF report
 
 Example UI workflow:
 
+---
 
 from agents.agentk8s import AgentK8s
 from agents.tools.dummy_tool import DummyTool
