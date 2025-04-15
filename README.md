@@ -86,3 +86,27 @@ from agents.tools.dummy_tool import DummyTool
 agent = AgentK8s(tools=[DummyTool()])
 response = agent("Our EKS nodes go into NotReady, and we use shared IAM roles...")
 
+📄 Sample Output
+
+### EKS Operational Report
+
+🚨 Risks Identified
+
+**Cluster Health**
+- Nodes frequently enter NotReady state due to missing health checks
+
+**Security**
+- IAM roles are shared, violating least privilege principles
+
+✅ Recommendations
+
+**Short-Term**
+- Configure node health check probes
+- Implement IAM roles for service accounts (IRSA)
+
+**Medium-Term**
+- Set up PodSecurityPolicies or use OPA/Gatekeeper
+
+**Long-Term**
+- Audit all IAM permissions and rotate keys periodically
+
