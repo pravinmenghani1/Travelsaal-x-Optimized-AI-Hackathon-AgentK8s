@@ -93,3 +93,4 @@ def generate_pdf(report_text: str, output_filename: str = "eks_operational_repor
     except Exception as e:
         print(f"PDF Generation Error: {str(e)}")
         raise
+
