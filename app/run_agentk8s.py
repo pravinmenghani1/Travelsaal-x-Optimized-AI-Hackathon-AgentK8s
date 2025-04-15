@@ -1,8 +1,13 @@
 # app/run_agentk8s.py
 
 import streamlit as st
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from agents.agentk8s import AgentK8s
 from agents.pdf_generator import generate_pdf
+
 
 st.set_page_config(page_title="AgentK8s – EKS Operational Review", layout="wide")
 st.title("AgentK8s - EKS Operational Review Agent 🤖")
