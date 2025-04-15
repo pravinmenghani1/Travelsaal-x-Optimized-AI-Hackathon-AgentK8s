@@ -23,53 +23,31 @@ def replace_emojis(text):
         text = text.replace(emoji, replacement)
     return text
 
-class PDFReportGenerator(FPDF):
-    def __init__(self, title="EKS Operational Report"):
+class PDFReport(FPDF):
+    def __init__(self):
         super().__init__()
-        self.title = title
-        
-        # Get font paths using os.path
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        font_dir = os.path.join(os.path.dirname(current_dir), 'fonts')
-        
-        # Define font paths
-        regular_font = os.path.join(font_dir, "DejaVuSans.ttf")
-        bold_font = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
-        italic_font = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
-        
-        print(f"Font directory: {font_dir}")
-        print(f"Regular font path: {regular_font}")
-        
-        # Register fonts with error handling
-        try:
-            if os.path.exists(regular_font):
-                self.add_font("DejaVu", "", regular_font, uni=True)
-            if os.path.exists(bold_font):
-                self.add_font("DejaVu", "B", bold_font, uni=True)
-            if os.path.exists(italic_font):
-                self.add_font("DejaVu", "I", italic_font, uni=True)
-            self.set_font("DejaVu", "", 12)
-            print("Custom fonts loaded successfully")
-        except Exception as e:
-            print(f"Error loading custom fonts: {str(e)}")
-            self.set_font("Arial", size=12)
-            print("Using Arial font as fallback")
+        self.set_auto_page_break(auto=True, margin=15)
+        self.title = "EKS Operational Report"
     
     def header(self):
-        try:
-            self.set_font("DejaVu", "B", 16)
-        except:
-            self.set_font("Arial", "B", 16)
+        self.set_font('Arial', 'B', 16)
         self.cell(0, 10, self.title, 0, 1, 'C')
         self.ln(10)
     
     def footer(self):
         self.set_y(-15)
-        try:
-            self.set_font("DejaVu", "", 8)
-        except:
-            self.set_font("Arial", "", 8)
+        self.set_font('Arial', 'I', 8)
         self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'C')
+
+    def chapter_title(self, title):
+        self.set_font('Arial', 'B', 12)
+        self.cell(0, 10, title, 0, 1)
+        self.ln(4)
+
+    def chapter_body(self, body):
+        self.set_font('Arial', '', 11)
+        self.multi_cell(0, 10, body)
+        self.ln()
 
 def generate_pdf(report_text: str, output_filename: str = "eks_operational_report.pdf"):
     """
@@ -80,33 +58,37 @@ def generate_pdf(report_text: str, output_filename: str = "eks_operational_repor
         report_text = replace_emojis(report_text)
         
         # Create PDF object
-        pdf = PDFReportGenerator()
+        pdf = PDFReport()
         pdf.add_page()
         
-        # Set font with fallback
-        try:
-            pdf.set_font("DejaVu", "", 12)
-        except:
-            pdf.set_font("Arial", "", 12)
-
-        # Write content
-        for line in report_text.splitlines():
-            if line.strip():
-                pdf.multi_cell(0, 10, line)
-            else:
+        # Process and write content
+        sections = report_text.split('\n')
+        for line in sections:
+            line = line.strip()
+            if not line:
                 pdf.ln(5)
+                continue
+                
+            # Handle different types of content
+            if any(marker in line for marker in ["Risk:", "Recommendation:"]):
+                pdf.set_font('Arial', 'B', 11)
+                pdf.cell(0, 10, line, 0, 1)
+            else:
+                pdf.set_font('Arial', '', 11)
+                pdf.multi_cell(0, 10, line)
 
-        # Try to save the PDF
+        # Save the PDF
         try:
             # Try to save in /tmp first
-            tmp_filename = os.path.join('/tmp', os.path.basename(output_filename))
+            tmp_filename = os.path.join('/tmp', 'eks_report.pdf')
             pdf.output(tmp_filename)
             return tmp_filename
         except Exception as e:
-            print(f"Error saving to /tmp: {str(e)}")
+            print(f"Failed to save in /tmp: {e}")
             # If /tmp fails, try current directory
-            pdf.output(output_filename)
-            return output_filename
+            current_dir_file = 'eks_report.pdf'
+            pdf.output(current_dir_file)
+            return current_dir_file
             
     except Exception as e:
         print(f"PDF Generation Error: {str(e)}")
