@@ -3,25 +3,13 @@
 from fpdf import FPDF
 import os
 import re
-from pathlib import Path
 
 def replace_emojis(text):
     """
     Replace specific unsupported emojis with text equivalents.
     """
-    emoji_map = {
-        "🚨": "[Risk]",
-        "✅": "[OK]",
-        "💡": "[Cluster Health]",
-        "💸": "[Cost Optimization]",
-        "🔐": "[Security]",
-        "📈": "[Monitoring]",
-        "⚙️": "[CI/CD]",
-        "🧩": "[Others]",
-        "🤖": "[Agent]"
-    }
-    for emoji, replacement in emoji_map.items():
-        text = text.replace(emoji, replacement)
+    text = text.replace("🚨", "[Risk]")
+    text = text.replace("✅", "[OK]")
     return text
 
 class PDFReportGenerator(FPDF):
@@ -29,54 +17,41 @@ class PDFReportGenerator(FPDF):
         super().__init__()
         self.title = title
         
-        # Get the repository root path using Path for better cross-platform compatibility
-        repo_root = Path(__file__).parent.parent.absolute()
-        font_dir = repo_root / "fonts"
+        # Get the absolute path to the project root directory
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         
-        # Print debug information
-        print(f"Repository root: {repo_root}")
-        print(f"Font directory: {font_dir}")
-        print(f"Font directory exists: {font_dir.exists()}")
-        if font_dir.exists():
-            print(f"Font directory contents: {list(font_dir.glob('*.ttf'))}")
+        # Define font paths using absolute paths
+        self.base_font_path = os.path.join(project_root, "fonts")
+        self.regular_font_path = os.path.join(self.base_font_path, "DejaVuSans.ttf")
+        self.bold_font_path = os.path.join(self.base_font_path, "DejaVuSans-Bold.ttf")
+        self.italic_font_path = os.path.join(self.base_font_path, "DejaVuSans-Oblique.ttf")
         
-        # Define font paths
-        self.fonts = {
-            'regular': font_dir / "DejaVuSans.ttf",
-            'bold': font_dir / "DejaVuSans-Bold.ttf",
-            'italic': font_dir / "DejaVuSans-Oblique.ttf"
-        }
+        # Debug print to see the paths
+        print(f"Font paths being used:")
+        print(f"Regular: {self.regular_font_path}")
+        print(f"Bold: {self.bold_font_path}")
+        print(f"Italic: {self.italic_font_path}")
+        
+        # Verify fonts exist
+        if not all(os.path.exists(p) for p in [self.regular_font_path, self.bold_font_path, self.italic_font_path]):
+            print("Warning: Some font files are missing!")
+            print(f"Contents of fonts directory: {os.listdir(self.base_font_path)}")
         
         # Register fonts with error handling
         try:
-            for style, path in self.fonts.items():
-                if path.exists():
-                    print(f"Loading font: {path}")
-                    if style == 'regular':
-                        self.add_font("DejaVu", "", str(path), uni=True)
-                    elif style == 'bold':
-                        self.add_font("DejaVu", "B", str(path), uni=True)
-                    elif style == 'italic':
-                        self.add_font("DejaVu", "I", str(path), uni=True)
-                else:
-                    print(f"Font file not found: {path}")
-            
-            # Test if fonts were loaded
-            self.set_font("DejaVu", "", 12)
-            print("Fonts loaded successfully")
-            
+            self.add_font("DejaVu", "", self.regular_font_path, uni=True)
+            self.add_font("DejaVu", "B", self.bold_font_path, uni=True)
+            self.add_font("DejaVu", "I", self.italic_font_path, uni=True)
         except Exception as e:
-            print(f"Error loading fonts: {str(e)}")
-            print("Falling back to Arial font")
+            print(f"Error registering fonts: {e}")
+            # Fallback to Arial
             self.set_font("Arial", size=12)
     
     def header(self):
         try:
             self.set_font("DejaVu", "B", 16)
-        except Exception as e:
-            print(f"Header font error: {str(e)}")
+        except:
             self.set_font("Arial", "B", 16)
-            
         self.cell(0, 10, self.title, border=False, ln=1, align="C")
         self.ln(10)
     
@@ -84,79 +59,37 @@ class PDFReportGenerator(FPDF):
         self.set_y(-15)
         try:
             self.set_font("DejaVu", "", 8)
-        except Exception as e:
-            print(f"Footer font error: {str(e)}")
+        except:
             self.set_font("Arial", "", 8)
-            
         self.cell(0, 10, f"Page {self.page_no()}", align="C")
 
 def generate_pdf(report_text: str, output_filename: str = "eks_operational_report.pdf"):
-    """
-    Generate a PDF report from the given text.
-    Args:
-        report_text (str): The text content to be converted to PDF
-        output_filename (str): The desired name of the output PDF file
-    Returns:
-        str: The path to the generated PDF file
-    """
     try:
-        # Clean the text
         report_text = replace_emojis(report_text)
-        
-        # Create PDF object
         pdf = PDFReportGenerator()
         pdf.add_page()
         
-        # Set font with fallback
         try:
             pdf.set_font("DejaVu", "", 12)
-        except Exception as e:
-            print(f"Font setting error: {str(e)}")
+        except:
             pdf.set_font("Arial", "", 12)
 
-        # Write content
         for line in report_text.splitlines():
             if line.strip():
                 pdf.multi_cell(0, 10, line)
             else:
                 pdf.ln(5)
 
-        # Try to save the PDF
+        # Try to save in different locations
         try:
-            print(f"Attempting to save PDF to: {output_filename}")
             pdf.output(output_filename)
-            print(f"PDF saved successfully to: {output_filename}")
-        except Exception as e:
-            print(f"Error saving to primary location: {str(e)}")
-            # Try alternate location
-            tmp_filename = f"/tmp/{os.path.basename(output_filename)}"
-            print(f"Attempting to save PDF to alternate location: {tmp_filename}")
-            pdf.output(tmp_filename)
-            output_filename = tmp_filename
-            print(f"PDF saved successfully to alternate location: {output_filename}")
+        except:
+            # If original location fails, try /tmp
+            output_filename = f"/tmp/{output_filename}"
+            pdf.output(output_filename)
             
         return output_filename
     
     except Exception as e:
         print(f"PDF Generation Error: {str(e)}")
         raise
-
-if __name__ == "__main__":
-    # Test the PDF generation
-    test_text = """
-    EKS Operational Review
-    
-    Cluster Health
-    Risk: Multiple nodes are experiencing issues
-    Recommendation: Implement proper monitoring
-    
-    Cost Optimization
-    Risk: Resources are underutilized
-    Recommendation: Configure auto-scaling
-    """
-    
-    try:
-        output_file = generate_pdf(test_text)
-        print(f"Test PDF generated successfully: {output_file}")
-    except Exception as e:
-        print(f"Test PDF generation failed: {str(e)}")
