@@ -28,3 +28,5 @@ The assistant interacts with users via a **web-based UI (Streamlit)** and produc
 
 ## 📁 Project Structure
 
+
+AgentPro/ ├── agents/ │ ├── agentk8s.py # Main AI agent logic using AgentPro-style REACT loop │ └── tools/ │ ├── base.py # Base Tool class │ └── dummy_tool.py # Example tool for testing agent actions ├── app/ │ └── streamlit_app.py # Web UI built with Streamlit ├── reports/ │ └── output.pdf # Generated PDF report (optional output folder) └── README.md
