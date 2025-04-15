@@ -80,9 +80,9 @@ Download the PDF report
 Example UI workflow:
 
 ---
-
 from agents.agentk8s import AgentK8s
 from agents.tools.dummy_tool import DummyTool
 
 agent = AgentK8s(tools=[DummyTool()])
 response = agent("Our EKS nodes go into NotReady, and we use shared IAM roles...")
+
