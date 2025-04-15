@@ -3,6 +3,46 @@
 import streamlit as st
 import os
 import sys
+
+# Get the absolute path of the current file
+current_file = os.path.abspath(__file__)
+
+# Get the directory containing the current file
+current_dir = os.path.dirname(current_file)
+
+# Get the parent directory (project root)
+project_root = os.path.dirname(current_dir)
+
+# Add the project root to the Python path
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+# Print debug information
+st.write(f"Current file: {current_file}")
+st.write(f"Current directory: {current_dir}")
+st.write(f"Project root: {project_root}")
+st.write(f"Python path: {sys.path}")
+st.write(f"Directory contents: {os.listdir(project_root)}")
+
+try:
+    from agents.agentk8s import AgentK8s
+    from agents.pdf_generator import generate_pdf
+    from openai import OpenAIError
+except ImportError as e:
+    st.error(f"Import Error: {str(e)}")
+    st.error(f"Current working directory: {os.getcwd()}")
+    st.error(f"Contents of current directory: {os.listdir()}")
+    if os.path.exists(os.path.join(project_root, 'agents')):
+        st.error(f"Contents of agents directory: {os.listdir(os.path.join(project_root, 'agents'))}")
+    raise
+
+# Once imports are successful, continue with your existing code
+st.set_page_config(page_title="AgentK8s – EKS Operational Review", layout="wide")
+# app/run_agentk8s.py
+
+import streamlit as st
+import os
+import sys
 from agents.agentk8s import AgentK8s
 from agents.pdf_generator import generate_pdf
 from openai import OpenAIError
