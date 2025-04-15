@@ -110,3 +110,76 @@ response = agent("Our EKS nodes go into NotReady, and we use shared IAM roles...
 **Long-Term**
 - Audit all IAM permissions and rotate keys periodically
 
+🛠️ Setup & Run
+1. Clone the repo
+bash
+Copy
+Edit
+git clone https://github.com/your-org/agentk8s.git
+cd agentk8s
+2. Set up environment
+Install dependencies:
+
+bash
+Copy
+Edit
+pip install -r requirements.txt
+Set environment variables (for OpenRouter or OpenAI):
+
+bash
+Copy
+Edit
+export OPENROUTER_API_KEY=your_key
+export MODEL_NAME=gpt-4o-mini  # or gpt-3.5-turbo
+3. Run the Streamlit app
+bash
+Copy
+Edit
+PYTHONPATH=. streamlit run app/streamlit_app.py
+📦 Extending the Agent
+You can create new tools by extending the Tool class in agents/tools/base.py. For example:
+
+python
+Copy
+Edit
+class MyTool(Tool):
+    name = "K8sMetricsTool"
+
+    def get_tool_description(self):
+        return "Fetches real-time metrics from the EKS cluster."
+
+    def run(self, input_data):
+        # logic to fetch from CloudWatch or Prometheus
+        return result
+Then plug it into AgentK8s:
+
+python
+Copy
+Edit
+agent = AgentK8s(tools=[MyTool()])
+🧪 Debugging Tips
+Add st.write(agent.messages) in the Streamlit app to view the agent's reasoning.
+
+Make sure PYTHONPATH is correctly set to resolve local imports.
+
+Use descriptive prompts. Example:
+
+vbnet
+Copy
+Edit
+“Our EKS workloads often restart due to OOMKilled. We're not using resource limits or liveness probes.”
+🧩 Dependencies
+openai or openrouter
+
+streamlit
+
+pdfkit or reportlab (for PDF generation)
+
+re, json, os, collections
+
+📝 License
+MIT License © 2025 [Your Company or Name]
+
+🤝 Contributing
+PRs are welcome! Add your own tools, metrics visualizations, or integrations (e.g., Slack, Prometheus, ArgoCD).
+
